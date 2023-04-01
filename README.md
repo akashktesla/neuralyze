@@ -1,6 +1,6 @@
 <h1> Neuralyze </h1>
 Neuralyze helps to visualize and create neural networks <br>
-<img src = "sample_img.png">
+<img src = "sample_image.png">
 <h2>Modes:<h2>
 <ul>
 <li>ESc: command: to excute commands like add/delete node||dendrite </li>
