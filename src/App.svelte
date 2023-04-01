@@ -15,8 +15,6 @@
   import { nodeClick } from "./store";
   import Dendrite from "./Dendrite.svelte";
 
-  invoke('my_custom_command', { invokeMessage: 'Hello!' })
-
   let nodes:{[key:string]:node} = {};
   let lines:{[key:string]:dendrite} = {};
   let neurons = {};
@@ -92,7 +90,7 @@
     $nodeClick = false;
     }
 
-  function deleteNode(node_id){
+  function deleteNode(node_id:number){
     if ($isSel){
       let neuron = neurons[node_id];
       console.log("neuron",neuron);
@@ -110,7 +108,7 @@
     }
   }
 
-  function deleteDendrite(node_id){
+  function deleteDendrite(node_id:number){
     if ($isSel){
       delete lines[node_id];
       $selDendrite = undefined;
@@ -118,17 +116,17 @@
     }
   }
 
-  function handleRClick(event){
+  function handleRClick(event:MouseEvent){
     event.preventDefault();
     console.log("right click");
   }
 
-  function handleKeyDown(event){
+  function handleKeyDown(event:KeyboardEvent){
     if (event.key==="Escape"){
       $mode = "command";
     }
   }
-  function handleKeyPress(event) {
+  function handleKeyPress(event:KeyboardEvent) {
     console.log("keypress: ",event.key);
     if (event.key==="f"){
       $mode = "move";
@@ -154,13 +152,14 @@
       $mode = "rope";
     }
     if (event.key==="p"){
+      invoke('greet', { })
       console.log("neural network:",neurons);
       console.log("nodes",nodes);
       console.log("lines",lines);
     }
   }
 
-  function handlekeyPressInput(event){
+  function handlekeyPressInput(event:KeyboardEvent){
     if (event.key==="Enter"){
       console.log("enter is pressed: "+$inputValue);
       if ($mode==="edit_node"){
@@ -178,6 +177,7 @@
       }
     }
   }
+
   function spawnCircle() {
     if (!$nodeClick){
       const cx = $mousePos.x-$coords.x;
@@ -188,6 +188,7 @@
       next_node_id +=1;
     }
   }
+
   function spawnLine(){
     let node1 = nodes[$preSelNode];
     let node2 = nodes[$selNode];
@@ -257,11 +258,6 @@
     color:white;
     margin: 5px;
   }
-  line{
-    stroke-width: 5px;
-    stroke: white;
-    background-color: black;
-  }
 </style>
 
 <div class="main" 
@@ -298,8 +294,8 @@
   <p> Selected dendrite: {$selDendrite} </p>
   <p> Selected type: {$selType} </p>
   <p> is selected: {$isSel} </p>
-  <p> coords: {$coords.x}{$coords.y} </p>
-  <p> mouse pos: {$mousePos.x}{$mousePos.y} </p>
+  <p> coords: {$coords.x},{$coords.y} </p>
+  <p> mouse pos: {$mousePos.x},{$mousePos.y} </p>
   <p> isDragging:{isDragging} </p>
 
 </div>
