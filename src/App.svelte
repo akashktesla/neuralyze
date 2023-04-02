@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/tauri"
+  import { hData } from "./store";
   import {mousePos} from "./store";
   import node from "./node";
   import neuron from "./neuron";
@@ -17,7 +18,7 @@
   import { inputValue } from "./store";
   import { nodeClick } from "./store";
   import Dendrite from "./Dendrite.svelte";
-
+  let inputBox:HTMLInputElement;
   let nodes:{[key:string]:node} = {};
   let lines:{[key:string]:dendrite} = {};
   let neuron_map:{[key:string]:neuron} = {};
@@ -79,7 +80,7 @@
           break;
         case "edit_node":
           neuron_map[$selNode].value = $inputValue;
-          $mode = "move"
+          $mode = "command"
           $isSel = false;
           $preSelNode = $selNode;
           $selNode = undefined;
@@ -88,7 +89,7 @@
           lines[$selDendrite].data = $inputValue;
           tdendrite_map[$selDendrite].weight = parseFloat($inputValue);
           rdendrite_map[$selDendrite].weight = parseFloat($inputValue);
-          $mode = "move"
+          $mode = "command"
           $isSel = false;
           $selDendrite = undefined;
           break;
@@ -195,12 +196,18 @@
     }
   }
 
+  function handleDblClick(){
+    if (inputBox!=null){
+      inputBox.focus();
+    }
+  }
+
   function handlekeyPressInput(event:KeyboardEvent){
     if (event.key==="Enter"){
       console.log("enter is pressed: "+$inputValue);
       if ($mode==="edit_node"){
         neuron_map[$selNode].value=$inputValue;
-        $mode = "move"
+        $mode = "command"
         $isSel = false;
         $preSelNode = $selNode;
         $selNode = undefined;
@@ -210,7 +217,7 @@
         tdendrite_map[$selDendrite].weight = parseFloat($inputValue);
         rdendrite_map[$selDendrite].weight = parseFloat($inputValue);
         console.log("ival:",$inputValue);
-        $mode = "move"
+        $mode = "command"
         $isSel = false;
         $selDendrite = undefined;
       }
@@ -255,7 +262,7 @@
     position: absolute;
     width:100%;
     height:100%;
-    background-color: #181a1b;
+    background-color: #000000;
   }
   svg{
     position: absolute;
@@ -266,17 +273,18 @@
   div.main{
     position: absolute;
     color: white;
-    background-color: #181a1b;
+    background-color: #000000;
     width:100%;
     height:100%;
     padding:0;
     margin:0;
   }
   input{
-    background-color: white;
+    background-color: #000000;
+    color: white;
     border-color:blueviolet;
     margin: 15px;
-    border-width:5px;
+    border-width:3px;
     font-size: 30px;
 
   }
@@ -284,23 +292,22 @@
     display:flex;
     margin: 0;
     margin-left:5px;
-    justify-content: flex-start;
+    justify-content: center;
     height:fit-content;
     width:fit-content;
-    flex-direction:column;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%);
   }
   .infoBar{
+    display: flex;
     height:fit-content;
-    width:fit-content;
-    font-size: 20px;
-    right:10px;
     bottom:20px;
-    border-width:5px;
-    border-color:blueviolet;
+    justify-content: space-evenly;
   }
   p{
     color:white;
-    margin: 5px;
+    font-size:16px;
   }
 </style>
 
@@ -312,7 +319,9 @@
      on:contextmenu={handleRClick} 
      on:mousedown={handleMouseDown} 
      on:mousemove={handleMouseMove} 
+     on:dblclick={handleDblClick}
      on:mouseup={handleMouseUp}>
+  
   <svg>
     {#key update}
     {#each Object.entries(lines) as [key,value]}
@@ -333,19 +342,22 @@
 </div>
 
 <div class = "infoBar">
-  <p> mode: {$mode} </p>
-  <p> Selected Node: {$selNode} </p>
-  <p> Prev Selected Node: {$preSelNode} </p>
-  <p> Selected dendrite: {$selDendrite} </p>
-  <p> Selected type: {$selType} </p>
-  <p> is selected: {$isSel} </p>
-  <p> coords: {$coords.x},{$coords.y} </p>
-  <p> mouse pos: {$mousePos.x},{$mousePos.y} </p>
-  <p> isDragging:{isDragging} </p>
+  <p> {$mode}</p>
+  <p> | </p>
+  <p> D~ {$hData} </p>
+  <p> | </p>
+  <p> S~ {$preSelNode} | {$selNode} D:{$selDendrite} T:{$selType}</p>
+  <p> | </p>
+  <p> C:({$coords.x},{$coords.y}) M:({$mousePos.x},{$mousePos.y}) </p>
 
 </div>
 {#if $mode.startsWith("edit")}
 <div class="inputBar">
-  <input bind:value={$inputValue} on:keypress={handlekeyPressInput}/>
+  <input 
+    bind:value={$inputValue} 
+    on:keypress={handlekeyPressInput}
+    on:keydown={handleKeyDown}
+    bind:this = {inputBox}
+    />
 </div>
 {/if}

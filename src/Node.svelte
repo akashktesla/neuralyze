@@ -1,5 +1,6 @@
 <script lang="ts">
   import {mode} from "./store";
+  import { hData } from "./store";
   import type  node from "./node";
   import { selType } from "./store";
   import {selNode} from "./store"
@@ -14,7 +15,7 @@
   let cx = _node.x;
   let cy = _node.y;
 
-  function handleNodeClick(event){
+  function handleNodeClick(event:any){
     console.log("Node click triggered");
     const node_id = event.target.dataset.value;
     $nodeClick = true;
@@ -22,6 +23,7 @@
     $preSelNode = $selNode;
     $selNode = node_id;
     $isSel = true;
+    $hData=data;
   }
 
   function handleDblClickNode(){
@@ -34,18 +36,12 @@
 <style>
   circle{
     stroke: blueviolet;
+    fill: #000000;
     stroke-width:5px
-  }
-  input{
-    position:relative;
-    border:5px;
-    border-color:blue;
-    background-color: blue;
-    width: 100%;
   }
   text{
     position: absolute;
-    fill:blueviolet;
+    fill:white;
     margin:0;
   }
 </style>
@@ -58,6 +54,8 @@
   on:mousedown = {handleNodeClick}
   on:dblclick = {handleDblClickNode}
   on:keypress = {()=>{}}
+  on:mouseover={()=>{$hData=data}}
+  on:focus={()=>{}}
 />
 
 <text 
@@ -69,8 +67,8 @@
   data-value={index} 
   text-anchor="middle"
   alignment-baseline="auto" 
+  on:mouseover={()=>{$hData=data}}
+  on:focus={()=>{}}
 >
 {_node.data}
 </text>
-
-
