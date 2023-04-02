@@ -9,6 +9,7 @@
   import {inputValue} from "./store"
   import { coords } from "./store";
   export let _node:node;
+  export let data:string;
   export let index:string;
   let cx = _node.x;
   let cy = _node.y;
@@ -26,7 +27,7 @@
   function handleDblClickNode(){
     console.log("double click");
     console.log("node"+$selNode+"is selected")
-    $inputValue = _node.data.toString();
+    $inputValue = data;
     $mode = "edit_node";
   }
 </script>

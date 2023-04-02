@@ -1,8 +1,11 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/tauri"
   import {mousePos} from "./store";
-  import node from "./node"
+  import node from "./node";
+  import neuron from "./neuron";
   import dendrite from "./dendrite";
+  import tdendrite from "./tdendrite";
+  import rdendrite from "./rdendrite";
   import Node from "./Node.svelte";
   import {mode} from "./store"
   import {selNode} from "./store"
@@ -17,6 +20,9 @@
 
   let nodes:{[key:string]:node} = {};
   let lines:{[key:string]:dendrite} = {};
+  let neuron_map:{[key:string]:neuron} = {};
+  let tdendrite_map:{[key:string]:tdendrite} = {};
+  let rdendrite_map:{[key:string]:rdendrite} = {};
   let neurons = {};
   let update = false;
   let next_node_id = 0;
@@ -72,7 +78,7 @@
           spawnCircle();
           break;
         case "edit_node":
-          nodes[$selNode].data = $inputValue;
+          neuron_map[$selNode].value = $inputValue;
           $mode = "move"
           $isSel = false;
           $preSelNode = $selNode;
@@ -80,6 +86,8 @@
           break;
         case "edit_dendrite":
           lines[$selDendrite].data = $inputValue;
+          tdendrite_map[$selDendrite].weight = parseFloat($inputValue);
+          rdendrite_map[$selDendrite].weight = parseFloat($inputValue);
           $mode = "move"
           $isSel = false;
           $selDendrite = undefined;
@@ -98,9 +106,11 @@
       for ( var i=0; i<_len; i++){
         console.log("i",i);
         deleteDendrite(neuron.dnd[i]);
+
       }
       delete nodes[node_id];
       delete neurons[node_id];
+      delete neuron_map[node_id];
       $isSel = false;
       $preSelNode = $selNode;
       $selNode = undefined;
@@ -111,6 +121,8 @@
   function deleteDendrite(node_id:number){
     if ($isSel){
       delete lines[node_id];
+      delete tdendrite_map[node_id];
+      delete rdendrite_map[node_id];
       $selDendrite = undefined;
       console.log(lines);
     }
@@ -152,10 +164,34 @@
       $mode = "rope";
     }
     if (event.key==="p"){
-      invoke('greet', { })
-      console.log("neural network:",neurons);
+      invoke('greet', { });
       console.log("nodes",nodes);
       console.log("lines",lines);
+      console.log("neuron_map",neuron_map);
+      console.log("tdendrite_map",tdendrite_map);
+      console.log("rdendrite_map",rdendrite_map);
+
+    }
+    if (event.key==="g"){
+      let data = "";
+      for (const [key,value] of Object.entries(neuron_map)){
+          let t_term = "["+value.t_term.join(",").toString()+"]"
+          let r_term = "["+value.t_term.join(",").toString()+"]";
+          let nstr = value.id.toString()+":"+value.value+":"+t_term+":"+r_term
+          data+="|"+nstr;
+      }
+      data+="#";
+      for (const [key,value] of Object.entries(tdendrite_map)){
+        let tstr = value.id.toString()+":"+value.output.toString()+":"+value.weight.toString();
+        data +="|"+tstr;
+      }
+      data+="#";
+      for (const [key,value] of Object.entries(rdendrite_map)){
+        let tstr = value.id.toString()+":"+value.input.toString()+":"+value.weight.toString();
+        data +="|"+tstr;
+      }
+      console.log("data:",data);
+      invoke('save',{path:"/home/aki/projects/projectD/neuralyze/test.ddb",data:data});
     }
   }
 
@@ -163,7 +199,7 @@
     if (event.key==="Enter"){
       console.log("enter is pressed: "+$inputValue);
       if ($mode==="edit_node"){
-        nodes[$selNode].data = $inputValue;
+        neuron_map[$selNode].value=$inputValue;
         $mode = "move"
         $isSel = false;
         $preSelNode = $selNode;
@@ -171,6 +207,9 @@
       }
       if ($mode==="edit_dendrite"){
         lines[$selDendrite].data = $inputValue;
+        tdendrite_map[$selDendrite].weight = parseFloat($inputValue);
+        rdendrite_map[$selDendrite].weight = parseFloat($inputValue);
+        console.log("ival:",$inputValue);
         $mode = "move"
         $isSel = false;
         $selDendrite = undefined;
@@ -184,6 +223,7 @@
       const cy = $mousePos.y-$coords.y;
       const data = next_node_id.toString();
       nodes[next_node_id] = new node(cx,cy,data);
+      neuron_map[next_node_id] = new neuron(next_node_id,"",[],[]);
       neurons[next_node_id] = {weight:0,in:[],out:[],dnd:[]}
       next_node_id +=1;
     }
@@ -193,9 +233,13 @@
     let node1 = nodes[$preSelNode];
     let node2 = nodes[$selNode];
     lines[next_line_id] = new dendrite(node1,node2,"");
+    tdendrite_map[next_line_id] = new tdendrite(next_line_id,$selNode,0);
+    rdendrite_map[next_line_id] = new rdendrite(next_line_id,$preSelNode,0);
     //updating neural network
     neurons[$preSelNode].out.push($selNode);
     neurons[$selNode].in.push($preSelNode);
+    neuron_map[$preSelNode].t_term.push($selNode);
+    neuron_map[$selNode].r_term.push($preSelNode);
     //to manipulate dendrites later (delete)
     neurons[$preSelNode].dnd.push(next_line_id);
     neurons[$selNode].dnd.push(next_line_id);
@@ -280,6 +324,7 @@
     {#each Object.entries(nodes) as [key,value]}
       <Node
       _node = {value}
+      data = {neuron_map[key].value}
       index = {key}
       />
     {/each}
