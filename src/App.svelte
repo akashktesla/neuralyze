@@ -29,7 +29,6 @@
   let update = false;
   let next_node_id = 0;
   let next_line_id = 0;
-  let flag_focus = false;
 
   $: ifocus(inputBox);
   async function ifocus(ib){
@@ -38,19 +37,21 @@
         }
     }
 
-
   let isDragging = false;
   let x = 0;
   let y = 0;
 
   $: nodes = nodes;
 
-
   //TODO: write load for .ddb file too and store it as a part of .nz file (test case... delete panna proper ah aganum)
   function save(path:string){
     let nodes_data = JSON.stringify(nodes);
     let lines_data = JSON.stringify(lines);
-    let data = nodes_data+"#"+lines_data;
+    let neuron_map_data = JSON.stringify(neuron_map);
+    let tdendrite_map_data = JSON.stringify(tdendrite_map);
+    let rdendrite_map_data = JSON.stringify(rdendrite_map);
+    let neurons_data = JSON.stringify(neurons);
+    let data = nodes_data+"#"+lines_data+"#"+neuron_map_data+"#"+tdendrite_map_data+"#"+rdendrite_map_data+"#"+neurons_data;
     invoke('save',{path:path,data:data});
   }
 
@@ -59,10 +60,13 @@
     let sdata = data.split("#");
     let nodes_data = JSON.parse(sdata[0]);
     let lines_data = JSON.parse(sdata[1]);
+    let neuron_map_data = JSON.parse(sdata[2]);
+    let tdendrite_map_data = JSON.parse(sdata[3]);
+    let rdendrite_map_data = JSON.parse(sdata[4]);
+    let neurons_data = JSON.parse(sdata[5]);
     //cleaning up
     let next_node_id = 0;
     let next_line_id = 0;
-
 
     for (let key in nodes_data){
       let cx = nodes_data[key].x;
@@ -78,12 +82,38 @@
       let node2 = lines_data[key].node2;
       let data = lines_data[key].data;
       lines[next_line_id] = new dendrite(node1,node2,data);
-      tdendrite_map[next_line_id] = new tdendrite(next_line_id,$selNode,parseFloat(data));
-      rdendrite_map[next_line_id] = new rdendrite(next_line_id,$preSelNode,parseFloat(data));
-      //load .ddb here
       next_line_id +=1;
-
     }
+    for (let key in neuron_map_data){
+      let _neuron = neuron_map_data[key];
+      let id = _neuron.id;
+      let value = _neuron.value;
+      let t_term = _neuron.t_term;
+      let r_term = _neuron.r_term;
+      let Tneuron = new neuron(id,value,t_term,r_term);
+      neuron_map[key] = Tneuron;
+    }
+    for (let key in tdendrite_map_data){
+      let _tdendrite = tdendrite_map_data[key];
+      let id = _tdendrite.id;
+      let output = _tdendrite.output;
+      let weight = _tdendrite.weight;
+      let Ttdendrite = new tdendrite(id,output,weight);
+      tdendrite_map[key] = Ttdendrite;
+    }
+
+    for (let key in rdendrite_map_data){
+      let _rdendrite = rdendrite_map_data[key];
+      let id = _rdendrite.id;
+      let output = _rdendrite.output;
+      let weight = _rdendrite.weight;
+      let Trdendrite = new rdendrite(id,output,weight);
+      rdendrite_map[key] = Trdendrite;
+    }
+    for (let key in neurons_data){
+      neurons[key] = neurons_data[key];
+    }
+ 
     await invoke("print",{data:"nodes:"+nodes});
     await invoke("print",{data:"lines:"+lines});
 
@@ -223,6 +253,7 @@
     console.log("keypress: ",event.key);
     if (event.key===":"){
         $mode = "edit_command";
+        $inputValue = "";
     }
     if (event.key==="f"){
       $mode = "move";
@@ -287,7 +318,7 @@
       if ($mode==="edit_command"){
         let input = $inputValue;
         let cmd_array = input.split(" ");
-        let command  = cmd_array[0];
+        let command  = cmd_array[0].replace(":","");
         let param  = cmd_array[1];
         console.log("command",command);
         console.log("param",param);
@@ -303,12 +334,7 @@
             break;
           default:
             break;
-
-          
         }
-
-
-
         $mode = "command"
         divv.focus();
       }
