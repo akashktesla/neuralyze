@@ -6,8 +6,8 @@ Neuralyze helps to visualize and create neural networks <br>
 <li><b>command</b>: to excute commands like add/delete node||dendrite </li>
 <li><b>rope</b>: Move node in the space</li>
 <li><b>move</b>: Move within the space</li>
-<li>dblClick: <b>edit_node</b>: edit node </b>
-<li>dblClick: <b>edit_dendrite</b>: edit dendrite </b>
+<li>dblClick on node: <b>edit_node</b>: edit node </b>
+<li>dblClick on denderite: <b>edit_dendrite</b>: edit dendrite </b>
 </ul><br>
 <h2>Commands:<h2>
 <ul>
@@ -19,5 +19,7 @@ Neuralyze helps to visualize and create neural networks <br>
 <li><b>d</b>: delete selected node and all it's dendrites</li>
 <li><b>p</b>: print states</li>
 <li><b>g</b>: generate neural network </li>
+<li><b>:gen {path/filename.ddb}</b> to generate neural network and store it in demon database format(.ddb)
+<li><b>:save {path/filename.nz}</b>: to store the nz file </li>
+<li><b>:load {path/filename.nz}</b>: to load the nz file </li>
 </ul>
-
