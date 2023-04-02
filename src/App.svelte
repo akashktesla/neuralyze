@@ -18,7 +18,9 @@
   import { inputValue } from "./store";
   import { nodeClick } from "./store";
   import Dendrite from "./Dendrite.svelte";
+  import { tick } from "svelte";
   let inputBox:HTMLInputElement;
+  let divv;
   let nodes:{[key:string]:node} = {};
   let lines:{[key:string]:dendrite} = {};
   let neuron_map:{[key:string]:neuron} = {};
@@ -28,6 +30,15 @@
   let update = false;
   let next_node_id = 0;
   let next_line_id = 0;
+  let flag_focus = false;
+
+  $: ifocus(inputBox);
+  async function ifocus(ib){
+    if (ib!=null){
+       ib.focus();
+        }
+    }
+
 
   let isDragging = false;
   let x = 0;
@@ -35,6 +46,35 @@
 
   $: nodes = nodes;
 
+
+
+  function save(path:string){
+      let data = "";
+      for (const [key,value] of Object.entries(neuron_map)){
+          let t_term = "["+value.t_term.join(",").toString()+"]"
+          let r_term = "["+value.t_term.join(",").toString()+"]";
+          let nstr = value.id.toString()+":"+value.value+":"+t_term+":"+r_term
+          data+="|"+nstr;
+      }
+      data+="#";
+      for (const [key,value] of Object.entries(tdendrite_map)){
+        let tstr = value.id.toString()+":"+value.output.toString()+":"+value.weight.toString();
+        data +="|"+tstr;
+      }
+      data+="#";
+      for (const [key,value] of Object.entries(rdendrite_map)){
+        let tstr = value.id.toString()+":"+value.input.toString()+":"+value.weight.toString();
+        data +="|"+tstr;
+      }
+      console.log("data:",data);
+      invoke('save',{path:path,data:data});
+
+  }
+
+
+
+
+  
   function handleMouseDown() {
     console.log("mouse down");
     isDragging = true;
@@ -81,6 +121,7 @@
         case "edit_node":
           neuron_map[$selNode].value = $inputValue;
           $mode = "command"
+          divv.focus();
           $isSel = false;
           $preSelNode = $selNode;
           $selNode = undefined;
@@ -90,6 +131,7 @@
           tdendrite_map[$selDendrite].weight = parseFloat($inputValue);
           rdendrite_map[$selDendrite].weight = parseFloat($inputValue);
           $mode = "command"
+          divv.focus();
           $isSel = false;
           $selDendrite = undefined;
           break;
@@ -137,10 +179,14 @@
   function handleKeyDown(event:KeyboardEvent){
     if (event.key==="Escape"){
       $mode = "command";
+      divv.focus();
     }
   }
   function handleKeyPress(event:KeyboardEvent) {
     console.log("keypress: ",event.key);
+    if (event.key===":"){
+        $mode = "edit_command";
+    }
     if (event.key==="f"){
       $mode = "move";
     }
@@ -165,7 +211,6 @@
       $mode = "rope";
     }
     if (event.key==="p"){
-      invoke('greet', { });
       console.log("nodes",nodes);
       console.log("lines",lines);
       console.log("neuron_map",neuron_map);
@@ -208,6 +253,7 @@
       if ($mode==="edit_node"){
         neuron_map[$selNode].value=$inputValue;
         $mode = "command"
+        divv.focus();
         $isSel = false;
         $preSelNode = $selNode;
         $selNode = undefined;
@@ -218,8 +264,35 @@
         rdendrite_map[$selDendrite].weight = parseFloat($inputValue);
         console.log("ival:",$inputValue);
         $mode = "command"
+        divv.focus();
         $isSel = false;
         $selDendrite = undefined;
+      }
+      if ($mode==="edit_command"){
+        let input = $inputValue;
+        let cmd_array = input.split(" ");
+        let command  = cmd_array[0];
+        let param  = cmd_array[1];
+        console.log("command",command);
+        console.log("param",param);
+        switch(command){
+          case "save":
+            save(param);
+            break;
+          case "load":
+            break;
+          case "gen":
+            break;
+          default:
+            break;
+
+          
+        }
+
+
+
+        $mode = "command"
+        divv.focus();
       }
     }
   }
@@ -295,8 +368,8 @@
     justify-content: center;
     height:fit-content;
     width:fit-content;
-    top:50%;
-    left:50%;
+    top:10%;
+    left:20%;
     transform: translate(-50%, -50%);
   }
   .infoBar{
@@ -313,6 +386,7 @@
 
 <div class="main" 
      on:click={handleClick} 
+     bind:this ={divv}
      tabindex=-1 
      on:keypress={handleKeyPress} 
      on:keydown={handleKeyDown}
