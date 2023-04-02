@@ -18,7 +18,6 @@
   import { inputValue } from "./store";
   import { nodeClick } from "./store";
   import Dendrite from "./Dendrite.svelte";
-  import { tick } from "svelte";
   let inputBox:HTMLInputElement;
   let divv;
   let nodes:{[key:string]:node} = {};
@@ -47,34 +46,72 @@
   $: nodes = nodes;
 
 
-
+  //TODO: write load for .ddb file too and store it as a part of .nz file (test case... delete panna proper ah aganum)
   function save(path:string){
+    let nodes_data = JSON.stringify(nodes);
+    let lines_data = JSON.stringify(lines);
+    let data = nodes_data+"#"+lines_data;
+    invoke('save',{path:path,data:data});
+  }
+
+  async function load(path:string){
+    let data:string = await invoke('load',{path:path});
+    let sdata = data.split("#");
+    let nodes_data = JSON.parse(sdata[0]);
+    let lines_data = JSON.parse(sdata[1]);
+    //cleaning up
+    let next_node_id = 0;
+    let next_line_id = 0;
+
+
+    for (let key in nodes_data){
+      let cx = nodes_data[key].x;
+      let cy = nodes_data[key].y;
+      let data = nodes_data[key].data;
+      nodes[next_node_id] = new node(cx,cy,data);
+      neuron_map[next_node_id] = new neuron(next_node_id,"",[],[]);
+      neurons[next_node_id] = {weight:0,in:[],out:[],dnd:[]}
+      next_node_id +=1;
+    }
+    for (let key in lines_data){
+      let node1 = lines_data[key].node1;
+      let node2 = lines_data[key].node2;
+      let data = lines_data[key].data;
+      lines[next_line_id] = new dendrite(node1,node2,data);
+      tdendrite_map[next_line_id] = new tdendrite(next_line_id,$selNode,parseFloat(data));
+      rdendrite_map[next_line_id] = new rdendrite(next_line_id,$preSelNode,parseFloat(data));
+      //load .ddb here
+      next_line_id +=1;
+
+    }
+    await invoke("print",{data:"nodes:"+nodes});
+    await invoke("print",{data:"lines:"+lines});
+
+    update = !update;
+  }
+
+  function gen(path:string){
       let data = "";
-      for (const [key,value] of Object.entries(neuron_map)){
+      for (const [_,value] of Object.entries(neuron_map)){
           let t_term = "["+value.t_term.join(",").toString()+"]"
           let r_term = "["+value.t_term.join(",").toString()+"]";
           let nstr = value.id.toString()+":"+value.value+":"+t_term+":"+r_term
           data+="|"+nstr;
       }
       data+="#";
-      for (const [key,value] of Object.entries(tdendrite_map)){
+      for (const [_,value] of Object.entries(tdendrite_map)){
         let tstr = value.id.toString()+":"+value.output.toString()+":"+value.weight.toString();
         data +="|"+tstr;
       }
       data+="#";
-      for (const [key,value] of Object.entries(rdendrite_map)){
+      for (const [_,value] of Object.entries(rdendrite_map)){
         let tstr = value.id.toString()+":"+value.input.toString()+":"+value.weight.toString();
         data +="|"+tstr;
       }
       console.log("data:",data);
       invoke('save',{path:path,data:data});
-
   }
 
-
-
-
-  
   function handleMouseDown() {
     console.log("mouse down");
     isDragging = true;
@@ -218,27 +255,6 @@
       console.log("rdendrite_map",rdendrite_map);
 
     }
-    if (event.key==="g"){
-      let data = "";
-      for (const [key,value] of Object.entries(neuron_map)){
-          let t_term = "["+value.t_term.join(",").toString()+"]"
-          let r_term = "["+value.t_term.join(",").toString()+"]";
-          let nstr = value.id.toString()+":"+value.value+":"+t_term+":"+r_term
-          data+="|"+nstr;
-      }
-      data+="#";
-      for (const [key,value] of Object.entries(tdendrite_map)){
-        let tstr = value.id.toString()+":"+value.output.toString()+":"+value.weight.toString();
-        data +="|"+tstr;
-      }
-      data+="#";
-      for (const [key,value] of Object.entries(rdendrite_map)){
-        let tstr = value.id.toString()+":"+value.input.toString()+":"+value.weight.toString();
-        data +="|"+tstr;
-      }
-      console.log("data:",data);
-      invoke('save',{path:"/home/aki/projects/projectD/neuralyze/test.ddb",data:data});
-    }
   }
 
   function handleDblClick(){
@@ -280,8 +296,10 @@
             save(param);
             break;
           case "load":
+            load(param);
             break;
           case "gen":
+            gen(param);
             break;
           default:
             break;
