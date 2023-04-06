@@ -24,6 +24,11 @@
     $selNode = node_id;
     $isSel = true;
     $hData=data;
+    if ($mode ==="Edit"){
+      $mode = "edit_node";
+      $inputValue = data;
+    }
+
   }
 
   function handleDblClickNode(){

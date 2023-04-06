@@ -34,6 +34,10 @@
     $selType = "dendrite"
     $nodeClick = true;
     $isSel = true;
+    if ($mode === "Edit"){
+      $mode = "edit_dendrite";
+      $inputValue = line.data;
+    }
   }
 
 
