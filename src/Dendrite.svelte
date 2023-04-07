@@ -1,6 +1,7 @@
 <script lang="ts">
   import {mode} from "./store";
   import type dendrite from "./dendrite";
+  import { hData } from "./store";
   import { coords } from "./store";
   import { selDendrite } from "./store";
   import { nodeClick } from "./store";
@@ -14,8 +15,25 @@
 
   $: y1 = line.node1.y
   $: y2 = line.node2.y
-  $: x3 = (x1+x2)/2
-  $: y3 = (y1+y2)/2
+  /* $: x3 = (x1+x2)/2 */
+  /* $: y3 = (y1+y2)/2 */
+
+  const arrowSize = 17;
+  const offset = 39;
+
+  let rect_offset = 80;
+  let yoffset = 30;
+  $: cirx = x2 - rect_offset * Math.cos(angle) + $coords.x + yoffset * Math.cos(angle+ Math.PI/2 );
+  $: ciry = y2 - rect_offset * Math.sin(angle) + $coords.y + yoffset * Math.sin(angle+ Math.PI/2 );
+
+  $: angle = Math.atan2(y2 - y1, x2 - x1);
+  $: arrowX1 = x2 - offset * Math.cos(angle) + $coords.x;
+  $: arrowY1 = y2 - offset * Math.sin(angle) + $coords.y ;
+
+  $: arrow1X2 = arrowX1 - arrowSize * Math.cos(angle - Math.PI / 6) ;
+  $: arrow1Y2 = arrowY1 - arrowSize * Math.sin(angle - Math.PI / 6) ;
+  $: arrow2X2 = arrowX1 - arrowSize * Math.cos(angle + Math.PI / 6) ;
+  $: arrow2Y2 = arrowY1 - arrowSize * Math.sin(angle + Math.PI / 6) ;
 
   function measureText(text,textSize) {
     let span = document.createElement('span');
@@ -50,14 +68,18 @@
 
 
 </script>
+
 <style>
   line{
-    stroke-width: 5px;
+    stroke-width: 2px;
     stroke: white;
   }
-  text{
-    margin:0;
+  circle{
+    stroke: red;
+    fill: #000000;
+    /* stroke-width:5px; */
   }
+  
 </style>
 
 <line 
@@ -66,29 +88,33 @@
   x2={x2+$coords.x}
   y2={y2+$coords.y} 
   data-value={index}
-  on:click={onClickDendrite}
+  on:mousedown={onClickDendrite}
   on:dblclick={handleDblClickDendrite}
+  on:mouseover={()=>{$hData=line.node1.data+" => "+line.node2.data+" = "+line.data}}
+  on:focus={()=>{}}
   on:keypress={()=>{}}
   />
 
-<rect 
-  x = {(x3 + $coords.x)-2}
-  y = {y3 + $coords.y -13}
-  width = {measureText(line.data,15)+4} height = 15 
+<polygon 
+  points=
+  "{arrowX1},{arrowY1} 
+  {arrow1X2},{arrow1Y2}
+  {arrow2X2},{arrow2Y2}" 
   data-value={index}
   on:mousedown={onClickDendrite}
   on:dblclick={handleDblClickDendrite}
   on:keypress={()=>{}}
-  fill = white/>
+  on:mouseover={()=>{$hData=line.node1.data+" => "+line.node2.data+" = "+line.data}}
+  on:focus={()=>{}}
+  fill="white" />
 
-<text 
-  x = {((line.node1.x+line.node2.x)/2 + $coords.x)}
-  y = {(line.node1.y+line.node2.y)/2 + $coords.y}
+<circle 
+  cx = {cirx}
+  cy = {ciry}
   data-value={index}
   on:mousedown={onClickDendrite}
   on:dblclick={handleDblClickDendrite}
   on:keypress={()=>{}}
-  >
-{line.data}
-</text>
-
+  on:mouseover={()=>{$hData=line.node1.data+" => "+line.node2.data+" = "+line.data}}
+  on:focus={()=>{}}
+  r = "20" />

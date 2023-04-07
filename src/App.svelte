@@ -31,8 +31,8 @@
   let rdendrite_map:{[key:string]:rdendrite} = {};
   let neurons = {};
   let update = false;
-  let next_node_id = 0;
-  let next_line_id = 0;
+  let next_node_id = 1;
+  let next_line_id = 1;
 
   $: ifocus(inputBox);
   dp();
@@ -63,8 +63,8 @@
      rdendrite_map= {};
      neurons = {};
      update = false;
-     next_node_id = 0;
-     next_line_id = 0;
+     next_node_id = 1;
+     next_line_id = 1;
   }
 
   //TODO: write load for .ddb file too and store it as a part of .nz file (test case... delete panna proper ah aganum)
@@ -106,8 +106,8 @@
       rdendrite_map[next_line_id] = new rdendrite(next_line_id,a,0);
       neurons[a].out.push(b);
       neurons[b].in.push(a);
-      neuron_map[a].t_term.push(b);
-      neuron_map[b].r_term.push(a);
+      neuron_map[a].t_term.push(next_line_id);
+      neuron_map[b].r_term.push(next_line_id);
       neurons[a].dnd.push(next_line_id);
       neurons[b].dnd.push(next_line_id);
       next_line_id +=1;
@@ -144,7 +144,7 @@
       let data = "";
       for (const [_,value] of Object.entries(neuron_map)){
           let t_term = "["+value.t_term.join(",").toString()+"]"
-          let r_term = "["+value.t_term.join(",").toString()+"]";
+          let r_term = "["+value.r_term.join(",").toString()+"]";
           let nstr = value.id.toString()+":"+value.value+":"+t_term+":"+r_term
           data+="|"+nstr;
       }
@@ -194,6 +194,10 @@
   function handleMouseUp() {
     console.log("mouse up");
     isDragging = false;
+    if (inputBox!=null){
+      inputBox.focus();
+    }
+
   }
 
   function handleClick(){
@@ -334,10 +338,11 @@
         $selNode = undefined;
       }
       if ($mode==="edit_dendrite"){
-        lines[$selDendrite].data = $inputValue;
-        lines_data_info[$selDendrite] = $inputValue;
-        tdendrite_map[$selDendrite].weight = parseFloat($inputValue);
-        rdendrite_map[$selDendrite].weight = parseFloat($inputValue);
+        let value = parseFloat(eval($inputValue));
+        lines[$selDendrite].data = value.toString();
+        lines_data_info[$selDendrite] = value;
+        tdendrite_map[$selDendrite].weight = value;
+        rdendrite_map[$selDendrite].weight = value;
         console.log("ival:",$inputValue);
         $mode = "command"
         divv.focus();
@@ -394,8 +399,8 @@
     //updating neural network
     neurons[$preSelNode].out.push($selNode);
     neurons[$selNode].in.push($preSelNode);
-    neuron_map[$preSelNode].t_term.push($selNode);
-    neuron_map[$selNode].r_term.push($preSelNode);
+    neuron_map[$preSelNode].t_term.push(next_line_id);
+    neuron_map[$selNode].r_term.push(next_line_id);
     //to manipulate dendrites later (delete)
     neurons[$preSelNode].dnd.push(next_line_id);
     neurons[$selNode].dnd.push(next_line_id);
@@ -434,7 +439,7 @@
     color: white;
     width: 100%;
     margin: 15px;
-    font-size: 20px;
+    font-size: 15px;
   }
   input:focus {
     border:none;
@@ -447,17 +452,17 @@
     justify-content: center;
     height:fit-content;
     width:99%;
-    bottom:60px;
+    bottom:0px;
   }
   .infoBar{
     display: flex;
     height:fit-content;
-    bottom:20px;
     justify-content: space-evenly;
+    bottom:30px;
   }
   p{
     color:white;
-    font-size:16px;
+    font-size:15px;
   }
 </style>
 

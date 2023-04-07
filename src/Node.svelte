@@ -40,7 +40,7 @@
 </script>
 <style>
   circle{
-    stroke: blueviolet;
+    stroke: red;
     fill: #000000;
     stroke-width:5px
   }
