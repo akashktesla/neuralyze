@@ -452,13 +452,13 @@
     justify-content: center;
     height:fit-content;
     width:99%;
-    bottom:0px;
+    bottom:5px;
   }
   .infoBar{
     display: flex;
     height:fit-content;
     justify-content: space-evenly;
-    bottom:30px;
+    bottom:40px;
   }
   p{
     color:white;
