@@ -1,5 +1,4 @@
-<script lang="ts">
-  import { invoke } from "@tauri-apps/api/tauri"
+<script lang="ts"> import { invoke } from "@tauri-apps/api/tauri"
   import { hData } from "./store";
   import {mousePos} from "./store";
   import node from "./node";
@@ -21,7 +20,7 @@
   let inputBox:HTMLInputElement;
   let divv;
   let default_path;
-  let lines_info = [];
+  let lines_info = {};
   let nodes_data_info = {};
   let lines_data_info = {};
   let nodes:{[key:string]:node} = {};
@@ -55,7 +54,7 @@
   function clear(){
      nodes_data_info = {};
      lines_data_info = {};
-     lines_info = [];
+     lines_info = {};
      nodes= {};
      lines= {};
      neuron_map= {};
@@ -67,7 +66,6 @@
      next_line_id = 1;
   }
 
-  //TODO: write load for .ddb file too and store it as a part of .nz file (test case... delete panna proper ah aganum)
   function save(path:string){
     let nodes_data = JSON.stringify(nodes);
     let lines_info_data = JSON.stringify(lines_info);
@@ -92,15 +90,22 @@
       let data = nodes_data[key].data;
       let _key = parseInt(key);
       nodes[_key] = new node(cx,cy,data);
-      neuron_map[_key] = new neuron(_key,data,[],[]);
+      neuron_map[_key] = new neuron(_key,"",[],[]);
       neurons[_key] = {weight:0,in:[],out:[],dnd:[]}
     }
+    await invoke("print",{data:"nodes:"+JSON.stringify(nodes)});
+    await invoke("print",{data:"lines info data"+JSON.stringify(lines_info_data)});
     for (let key in lines_info_data){
+      await invoke("print",{data:key});
       let a = lines_info_data[key].a
       let b = lines_info_data[key].b
+      await invoke("print",{data:"a: "+a});
+      await invoke("print",{data:"b: "+b});
       let node1 = nodes[a];
       let node2 = nodes[b];
-      lines_info = [...lines_info, {a:a,b:b}];
+      await invoke("print",{data:JSON.stringify(node1)});
+      await invoke("print",{data:JSON.stringify(node2)});
+      lines_info[next_line_id] = {a:a,b:b};
       lines[next_line_id] = new dendrite(node1,node2,"");
       tdendrite_map[next_line_id] = new tdendrite(next_line_id,b,0);
       rdendrite_map[next_line_id] = new rdendrite(next_line_id,a,0);
@@ -112,6 +117,7 @@
       neurons[b].dnd.push(next_line_id);
       next_line_id +=1;
     }
+    await invoke("print",{data:"lines_info:"+JSON.stringify(lines_info_data)});
     for (let key in nd_info){
       let val = nd_info[key];
       neuron_map[key].value = val;
@@ -125,8 +131,6 @@
       rdendrite_map[key].weight = parseFloat(val);
     }
 
-    await invoke("print",{data:"nodes:"+JSON.stringify(nodes)});
-    await invoke("print",{data:"lines_info:"+JSON.stringify(lines_info_data)});
     await invoke("print",{data:"lines:"+JSON.stringify(lines)});
     await invoke("print",{data:"neuron_map:"+JSON.stringify(neuron_map)});
     await invoke("print",{data:"tden:"+JSON.stringify(tdendrite_map)});
@@ -228,6 +232,7 @@
       delete nodes[node_id];
       delete neurons[node_id];
       delete neuron_map[node_id];
+      delete nodes_data_info[node_id];
       $isSel = false;
       $preSelNode = $selNode;
       $selNode = undefined;
@@ -238,6 +243,8 @@
   function deleteDendrite(node_id:number){
     if ($isSel){
       delete lines[node_id];
+      delete lines_info[node_id];
+      delete lines_data_info[node_id];
       delete tdendrite_map[node_id];
       delete rdendrite_map[node_id];
       $selDendrite = undefined;
@@ -392,7 +399,7 @@
   function spawnLine(){
     let node1 = nodes[$preSelNode];
     let node2 = nodes[$selNode];
-    lines_info = [...lines_info, {a:$preSelNode,b:$selNode}];
+    lines_info[next_line_id] = {a:$preSelNode,b:$selNode};
     lines[next_line_id] = new dendrite(node1,node2,"");
     tdendrite_map[next_line_id] = new tdendrite(next_line_id,$selNode,0);
     rdendrite_map[next_line_id] = new rdendrite(next_line_id,$preSelNode,0);
