@@ -1,6 +1,7 @@
 import {readable, writable} from "svelte/store";
 
 export var mode = writable("");
+export var zoom = writable(1);
 export var hData = writable("");
 export var selType= writable("");
 export var selNode= writable<number>();

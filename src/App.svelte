@@ -16,6 +16,7 @@
   import {isSel} from "./store"
   import { inputValue } from "./store";
   import { nodeClick } from "./store";
+  import { zoom } from "./store";
   import Dendrite from "./Dendrite.svelte";
   let inputBox:HTMLInputElement;
   let divv;
@@ -165,13 +166,29 @@
       console.log("data:",data);
       invoke('save',{path:default_path+path,data:data});
   }
+  
+  function handleWheel(event){
+    if (event.deltaY > 0) {
+      $zoom = $zoom -= 0.05;
+      if ($zoom<0.1){
+        $zoom = 0.1;
+      }
+      $zoom = parseFloat($zoom.toFixed(2));
+    } else {
+      $zoom = $zoom += 0.05;
+      $zoom = parseFloat($zoom.toFixed(2));
+     if ($zoom>3){
+        $zoom = 3;
+      }
+    }
+  }
 
   function handleMouseDown() {
     console.log("mouse down");
     isDragging = true;
     if ($mode == "move"){
-      x = $mousePos.x;
-      y = $mousePos.y;
+      x = $mousePos.x/$zoom;
+      y = $mousePos.y/$zoom;
     }
   }
 
@@ -179,15 +196,15 @@
     console.log("mouse move");
     if (isDragging) {
       if ($mode ==="move"){
-        const dx = $mousePos.x - x;
-        const dy = $mousePos.y - y;
-        x = $mousePos.x;
-        y = $mousePos.y;
+        const dx = $mousePos.x/$zoom - x;
+        const dy = $mousePos.y/$zoom - y;
+        x = $mousePos.x/$zoom;
+        y = $mousePos.y/$zoom;
         $coords = { x:$coords.x+dx, y:$coords.y+dy };
       }
       if($mode ==="rope"){
-        const cx = $mousePos.x-$coords.x;
-        const cy = $mousePos.y-$coords.y;
+        const cx = ($mousePos.x)/$zoom-$coords.x;
+        const cy = ($mousePos.y)/$zoom-$coords.y;
         nodes[$selNode].x = cx;
         nodes[$selNode].y = cy;
       }
@@ -386,8 +403,8 @@
 
   function spawnCircle() {
     if (!$nodeClick){
-      const cx = $mousePos.x-$coords.x;
-      const cy = $mousePos.y-$coords.y;
+      const cx = ($mousePos.x)/$zoom-$coords.x;
+      const cy = ($mousePos.y)/$zoom-$coords.y;
       const data = next_node_id.toString();
       nodes[next_node_id] = new node(cx,cy,data);
       neuron_map[next_node_id] = new neuron(next_node_id,"",[],[]);
@@ -462,6 +479,7 @@
     bottom:5px;
   }
   .infoBar{
+    zoom: 1.0;
     display: flex;
     height:fit-content;
     justify-content: space-evenly;
@@ -474,9 +492,11 @@
 </style>
 
 <div class="main" 
+     style="zoom:{$zoom}"
      on:click={handleClick} 
      bind:this ={divv}
      tabindex=-1 
+     on:wheel={handleWheel}
      on:keypress={handleKeyPress} 
      on:keydown={handleKeyDown}
      on:contextmenu={handleRClick} 
@@ -484,6 +504,7 @@
      on:mousemove={handleMouseMove} 
      on:dblclick={handleDblClick}
      on:mouseup={handleMouseUp}>
+    
   
   <svg>
     {#key update}
@@ -511,7 +532,9 @@
   <p> | </p>
   <p> S~ {$preSelNode} | {$selNode} D:{$selDendrite} T:{$selType}</p>
   <p> | </p>
-  <p> C:({$coords.x},{$coords.y}) M:({$mousePos.x},{$mousePos.y}) </p>
+  <p> C:({$coords.x.toFixed(2)},{$coords.y.toFixed(2)}) M:({$mousePos.x},{$mousePos.y}) </p>
+  <p> | </p>
+  <p>Z:{parseInt(($zoom*100).toString())}%</p>
 
 </div>
 {#if $mode.startsWith("edit")}
